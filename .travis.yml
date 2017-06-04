@@ -23,3 +23,7 @@ before_script:
 script:
   - cargo build
   - cargo test
+  - |
+      if [[ "$TRAVIS_RUST_VERSION" == "nightly" && $CLIPPY ]]; then
+        cargo clippy
+      fi
