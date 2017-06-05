@@ -237,7 +237,7 @@ impl<'a> MpsReader<'a> {
     }
 }
 
-fn read<'a, R: Read + 'a>(readable: R) -> Result<Problem, String> {
+pub fn read<'a, R: Read + 'a>(readable: R) -> Result<Problem, String> {
     let reader = BufReader::new(readable);
     let mut lines = reader.lines();
     let mut read_line = || -> Option<Result<String, String>> {
