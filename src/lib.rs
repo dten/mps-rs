@@ -66,7 +66,7 @@ impl<'a> MpsReader<'a> {
         Err(format!("Unexpected line reading {}:\n\"{}\"", section, line))
     }
 
-    pub fn to_problem(mut self) -> Result<Problem, String> {
+    pub fn into_problem(mut self) -> Result<Problem, String> {
         let mut problem = Problem::default();
         let mut header = self.read_name(&mut problem)?;
         loop {
@@ -120,7 +120,7 @@ impl<'a> MpsReader<'a> {
 
             } else {
 
-                let (row_type, row_id, _, _, _, _) = Self::as_fields(&line);
+                let (row_type, row_id, _, _, _, _) = Self::line_as_fields(&line);
 
                 let row_type = match row_type {
                     "N" if !found_objective => {
@@ -162,7 +162,7 @@ impl<'a> MpsReader<'a> {
                 return Ok(line.trim_right().into())
 
             } else {
-                let (_, col_id, row_id_1, row_val_1, row_id_2, row_val_2,) = Self::as_fields(&line);
+                let (_, col_id, row_id_1, row_val_1, row_id_2, row_val_2,) = Self::line_as_fields(&line);
 
                 let col_id = col_id.to_string();
                 let col = problem.columns_by_id.entry(col_id)
@@ -192,7 +192,7 @@ impl<'a> MpsReader<'a> {
                 return Ok(line.trim_right().into())
 
             } else {
-                let (_, rhs_id, row_id_1, row_val_1, row_id_2, row_val_2,) = Self::as_fields(&line);
+                let (_, rhs_id, row_id_1, row_val_1, row_id_2, row_val_2,) = Self::line_as_fields(&line);
 
                 let rhs_id = rhs_id.to_string();
                 let rhs = problem.rhs_by_id.entry(rhs_id)
@@ -214,7 +214,10 @@ impl<'a> MpsReader<'a> {
         Ok("".into())
     }
 
-    fn as_fields(line: &str) -> (&str,&str,&str,&str,&str,&str) {
+    #[allow(unknown_lints)]
+    #[allow(identity_op)]
+    #[allow(eq_op)]
+    fn line_as_fields(line: &str) -> (&str,&str,&str,&str,&str,&str) {
 
         let rem = line.as_bytes();
         let (__, rem) = rem.split_at(min(rem.len(),   1-1 + 1));
@@ -250,7 +253,7 @@ pub fn read<'a, R: Read + 'a>(readable: R) -> Result<Problem, String> {
                 Some(r) => Some(match r {
                     Err(e) => Err(e.to_string()),
                     Ok(s) => {
-                        if s.starts_with("*") {
+                        if s.starts_with('*') {
                             continue
                         }
                         if s.trim().is_empty() {
@@ -268,7 +271,7 @@ pub fn read<'a, R: Read + 'a>(readable: R) -> Result<Problem, String> {
 
     Ok(MpsReader {
         read_line: &mut read_line
-    }.to_problem()?)
+    }.into_problem()?)
 }
 
 pub fn parse_fixed(file_content: &str) -> Result<Problem, String>
