@@ -1,3 +1,6 @@
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
+
 use std::io::{Read, BufRead, BufReader};
 use std::rc::Rc;
 use std::collections::{BTreeMap};
