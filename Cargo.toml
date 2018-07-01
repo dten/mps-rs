@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["David Hewson <dev@daveid.co.uk>"]
 
 [dependencies]
-clippy = {version = "*", optional = true}
+clippy = {version = "0.0.211", optional = true}
 
 [features]
 default = []
