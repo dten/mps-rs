@@ -11,16 +11,7 @@ rust:
   - beta
   - stable
 
-# Add clippy
-before_script:
-  - |
-      if [[ "$TRAVIS_RUST_VERSION" == "nightly" ]]; then
-        CLIPPY=true
-      else
-        CLIPPY=false
-      fi
-
 # The main build
 script:
   - cargo clean -p mps
-  - ( ($CLIPPY && cargo test --features clippy) || cargo test)
+  - cargo test
