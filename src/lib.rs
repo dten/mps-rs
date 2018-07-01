@@ -1,5 +1,6 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
+#![cfg_attr(feature="clippy", allow(just_underscores_and_digits))]
 
 use std::io::{Read, BufRead, BufReader};
 use std::rc::Rc;
