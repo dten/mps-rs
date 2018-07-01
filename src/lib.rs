@@ -4,7 +4,6 @@
 use std::io::{Read, BufRead, BufReader};
 use std::rc::Rc;
 use std::collections::{BTreeMap};
-use std::ascii::AsciiExt;
 use std::cmp::min;
 
 #[derive(Debug, Eq, PartialEq)]
