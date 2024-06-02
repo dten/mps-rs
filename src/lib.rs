@@ -98,7 +98,7 @@ impl<'a> MpsReader<'a> {
             None => return Err("Unexpected EOF reading ROWS".to_string()),
             Some(r) => r?,
         };
-        Ok(line.trim_right().into())
+        Ok(line.into())
     }
 
     pub fn read_rows(&mut self, problem: &mut Problem) -> Result<String, String> {
@@ -114,7 +114,7 @@ impl<'a> MpsReader<'a> {
 
             let line_b = line.as_bytes();
             if line_b[0] != b' ' {
-                return Ok(line.trim_right().into())
+                return Ok(line.into())
 
             } else {
 
@@ -157,7 +157,7 @@ impl<'a> MpsReader<'a> {
 
             let line_b = line.as_bytes();
             if line_b[0] != b' ' {
-                return Ok(line.trim_right().into())
+                return Ok(line.into())
 
             } else {
                 let (_, col_id, row_id_1, row_val_1, row_id_2, row_val_2,) = Self::line_as_fields(&line);
@@ -187,7 +187,7 @@ impl<'a> MpsReader<'a> {
 
             let line_b = line.as_bytes();
             if line_b[0] != b' ' {
-                return Ok(line.trim_right().into())
+                return Ok(line.into())
 
             } else {
                 let (_, rhs_id, row_id_1, row_val_1, row_id_2, row_val_2,) = Self::line_as_fields(&line);
@@ -251,16 +251,16 @@ pub fn read<'a, R: Read + 'a>(readable: R) -> Result<Problem, String> {
                 Some(r) => Some(match r {
                     Err(e) => Err(e.to_string()),
                     Ok(s) => {
-                        if s.starts_with('*') {
+                        let Some(pre_comment) = s.split('*').next().map(|s| s.trim_end()) else {
+                            continue
+                        };
+                        if pre_comment.is_empty() {
                             continue
                         }
-                        if s.trim().is_empty() {
-                            continue
-                        }
-                        if !s.is_ascii() {
+                        if !pre_comment.is_ascii() {
                             return Some(Err(format!("Line is not ascii:\"{}\"", s)))
                         }
-                        Ok(s)
+                        Ok(pre_comment.to_owned())
                     }
                 })
             }
