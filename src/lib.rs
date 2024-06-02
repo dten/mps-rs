@@ -1,8 +1,8 @@
-#![cfg_attr(feature="cargo-clippy", allow(just_underscores_and_digits))]
+#![allow(clippy::just_underscores_and_digits)]
 
 use std::io::{Read, BufRead, BufReader};
 use std::rc::Rc;
-use std::collections::{BTreeMap};
+use std::collections::BTreeMap;
 use std::cmp::min;
 
 #[derive(Debug, Eq, PartialEq)]
@@ -51,7 +51,7 @@ pub struct Problem {
 }
 
 struct MpsReader<'a> {
-    read_line: &'a mut FnMut() -> Option<Result<String, String>>,
+    read_line: &'a mut dyn FnMut() -> Option<Result<String, String>>,
 }
 
 impl<'a> MpsReader<'a> {
@@ -98,7 +98,7 @@ impl<'a> MpsReader<'a> {
             None => return Err("Unexpected EOF reading ROWS".to_string()),
             Some(r) => r?,
         };
-        Ok(line.into())
+        Ok(line)
     }
 
     pub fn read_rows(&mut self, problem: &mut Problem) -> Result<String, String> {
@@ -114,7 +114,7 @@ impl<'a> MpsReader<'a> {
 
             let line_b = line.as_bytes();
             if line_b[0] != b' ' {
-                return Ok(line.into())
+                return Ok(line)
 
             } else {
 
@@ -157,14 +157,14 @@ impl<'a> MpsReader<'a> {
 
             let line_b = line.as_bytes();
             if line_b[0] != b' ' {
-                return Ok(line.into())
+                return Ok(line)
 
             } else {
                 let (_, col_id, row_id_1, row_val_1, row_id_2, row_val_2,) = Self::line_as_fields(&line);
 
                 let col_id = col_id.to_string();
                 let col = problem.columns_by_id.entry(col_id)
-                                               .or_insert_with(Default::default);
+                                               .or_default();
 
                 for &(id, val) in &[(row_id_1, row_val_1), (row_id_2, row_val_2)] {
                     if !id.is_empty() {
@@ -187,14 +187,14 @@ impl<'a> MpsReader<'a> {
 
             let line_b = line.as_bytes();
             if line_b[0] != b' ' {
-                return Ok(line.into())
+                return Ok(line)
 
             } else {
                 let (_, rhs_id, row_id_1, row_val_1, row_id_2, row_val_2,) = Self::line_as_fields(&line);
 
                 let rhs_id = rhs_id.to_string();
                 let rhs = problem.rhs_by_id.entry(rhs_id)
-                                               .or_insert_with(Default::default);
+                                               .or_default();
 
                 for &(id, val) in &[(row_id_1, row_val_1), (row_id_2, row_val_2)] {
                     if !id.is_empty() {
@@ -212,9 +212,8 @@ impl<'a> MpsReader<'a> {
         Ok("".into())
     }
 
-    #[allow(unknown_lints)]
-    #[allow(identity_op)]
-    #[allow(eq_op)]
+    #[allow(clippy::identity_op)]
+    #[allow(clippy::eq_op)]
     fn line_as_fields(line: &str) -> (&str,&str,&str,&str,&str,&str) {
 
         let rem = line.as_bytes();
@@ -267,9 +266,9 @@ pub fn read<'a, R: Read + 'a>(readable: R) -> Result<Problem, String> {
         }
     };
 
-    Ok(MpsReader {
+    MpsReader {
         read_line: &mut read_line
-    }.into_problem()?)
+    }.into_problem()
 }
 
 pub fn parse_fixed(file_content: &str) -> Result<Problem, String>
