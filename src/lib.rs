@@ -1,9 +1,9 @@
 #![allow(clippy::just_underscores_and_digits)]
 
-use std::io::{Read, BufRead, BufReader};
-use std::rc::Rc;
-use std::collections::BTreeMap;
 use std::cmp::min;
+use std::collections::BTreeMap;
+use std::io::{BufRead, BufReader, Read};
+use std::rc::Rc;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Objective {
@@ -21,9 +21,7 @@ pub enum RowType {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub enum BoundType {
-
-}
+pub enum BoundType {}
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct RowDef {
@@ -34,7 +32,7 @@ pub struct RowDef {
 
 #[derive(Debug, PartialEq, Default)]
 pub struct ColumnData {
-    pub data: BTreeMap<usize, f64>
+    pub data: BTreeMap<usize, f64>,
 }
 
 #[derive(Debug, PartialEq, Default)]
@@ -55,13 +53,15 @@ struct MpsReader<'a> {
 }
 
 impl<'a> MpsReader<'a> {
-
     fn read_line(&mut self) -> Option<Result<String, String>> {
         (self.read_line)()
     }
 
     fn err<T>(section: &str, line: &str) -> Result<T, String> {
-        Err(format!("Unexpected line reading {}:\n\"{}\"", section, line))
+        Err(format!(
+            "Unexpected line reading {}:\n\"{}\"",
+            section, line
+        ))
     }
 
     pub fn into_problem(mut self) -> Result<Problem, String> {
@@ -86,13 +86,13 @@ impl<'a> MpsReader<'a> {
         };
 
         if !line.starts_with("NAME          ") {
-            return Err(format!("Expected line starting \"{}\"", "NAME          "))
+            return Err(format!("Expected line starting \"{}\"", "NAME          "));
         }
 
         let name_field: String = line.chars().skip(14).take(15).collect();
         problem.name = name_field.trim().to_string();
         if problem.name.is_empty() {
-            return Err("NAME cannot be empty".to_string())
+            return Err("NAME cannot be empty".to_string());
         }
         let line = match self.read_line() {
             None => return Err("Unexpected EOF reading ROWS".to_string()),
@@ -102,7 +102,6 @@ impl<'a> MpsReader<'a> {
     }
 
     pub fn read_rows(&mut self, problem: &mut Problem) -> Result<String, String> {
-
         let mut found_objective = false;
 
         loop {
@@ -114,17 +113,15 @@ impl<'a> MpsReader<'a> {
 
             let line_b = line.as_bytes();
             if line_b[0] != b' ' {
-                return Ok(line)
-
+                return Ok(line);
             } else {
-
                 let (row_type, row_id, _, _, _, _) = Self::line_as_fields(&line);
 
                 let row_type = match row_type {
                     "N" if !found_objective => {
                         found_objective = true;
                         RowType::Objective
-                    },
+                    }
                     "N" => RowType::NoRestriction,
                     "L" => RowType::Le,
                     "G" => RowType::Ge,
@@ -134,13 +131,11 @@ impl<'a> MpsReader<'a> {
 
                 let name = row_id.to_string();
 
-                let row = Rc::new(
-                    RowDef {
-                        name: name.clone(),
-                        index: problem.rows_by_index.len(),
-                        typ: row_type,
-                    }
-                );
+                let row = Rc::new(RowDef {
+                    name: name.clone(),
+                    index: problem.rows_by_index.len(),
+                    typ: row_type,
+                });
 
                 problem.rows_by_index.push(row.clone());
                 problem.rows_by_id.insert(name, row);
@@ -157,21 +152,20 @@ impl<'a> MpsReader<'a> {
 
             let line_b = line.as_bytes();
             if line_b[0] != b' ' {
-                return Ok(line)
-
+                return Ok(line);
             } else {
-                let (_, col_id, row_id_1, row_val_1, row_id_2, row_val_2,) = Self::line_as_fields(&line);
+                let (_, col_id, row_id_1, row_val_1, row_id_2, row_val_2) =
+                    Self::line_as_fields(&line);
 
                 let col_id = col_id.to_string();
-                let col = problem.columns_by_id.entry(col_id)
-                                               .or_default();
+                let col = problem.columns_by_id.entry(col_id).or_default();
 
                 for &(id, val) in &[(row_id_1, row_val_1), (row_id_2, row_val_2)] {
                     if !id.is_empty() {
                         match problem.rows_by_id.get(id) {
                             None => return Err(format!("Unknown row id in COLUMNS: \"{}\"", id)),
                             Some(row) => col.data.insert(row.index, val.parse().unwrap()),
-                        };                        
+                        };
                     }
                 }
             }
@@ -187,21 +181,20 @@ impl<'a> MpsReader<'a> {
 
             let line_b = line.as_bytes();
             if line_b[0] != b' ' {
-                return Ok(line)
-
+                return Ok(line);
             } else {
-                let (_, rhs_id, row_id_1, row_val_1, row_id_2, row_val_2,) = Self::line_as_fields(&line);
+                let (_, rhs_id, row_id_1, row_val_1, row_id_2, row_val_2) =
+                    Self::line_as_fields(&line);
 
                 let rhs_id = rhs_id.to_string();
-                let rhs = problem.rhs_by_id.entry(rhs_id)
-                                               .or_default();
+                let rhs = problem.rhs_by_id.entry(rhs_id).or_default();
 
                 for &(id, val) in &[(row_id_1, row_val_1), (row_id_2, row_val_2)] {
                     if !id.is_empty() {
                         match problem.rows_by_id.get(id) {
                             None => return Err(format!("Unknown row id in RHS: \"{}\"", id)),
                             Some(row) => rhs.data.insert(row.index, val.parse().unwrap()),
-                        };                        
+                        };
                     }
                 }
             }
@@ -214,29 +207,30 @@ impl<'a> MpsReader<'a> {
 
     #[allow(clippy::identity_op)]
     #[allow(clippy::eq_op)]
-    fn line_as_fields(line: &str) -> (&str,&str,&str,&str,&str,&str) {
-
+    fn line_as_fields(line: &str) -> (&str, &str, &str, &str, &str, &str) {
         let rem = line.as_bytes();
-        let (__, rem) = rem.split_at(min(rem.len(),   1-1 + 1));
-        let (_1, rem) = rem.split_at(min(rem.len(),   3-2 + 1));
-        let (__, rem) = rem.split_at(min(rem.len(),   4-4 + 1));
-        let (_2, rem) = rem.split_at(min(rem.len(),  12-5 + 1));
-        let (__, rem) = rem.split_at(min(rem.len(),  14-13 + 1));
-        let (_3, rem) = rem.split_at(min(rem.len(),  22-15 + 1));
-        let (__, rem) = rem.split_at(min(rem.len(),  24-23 + 1));
-        let (_4, rem) = rem.split_at(min(rem.len(),  36-25 + 1));
-        let (__, rem) = rem.split_at(min(rem.len(),  39-37 + 1));
-        let (_5, rem) = rem.split_at(min(rem.len(),  47-40 + 1));
-        let (__, rem) = rem.split_at(min(rem.len(),  49-48 + 1));
-        let (_6,   _) = rem.split_at(min(rem.len(),  61-50 + 1));
+        let (__, rem) = rem.split_at(min(rem.len(), 1 - 1 + 1));
+        let (_1, rem) = rem.split_at(min(rem.len(), 3 - 2 + 1));
+        let (__, rem) = rem.split_at(min(rem.len(), 4 - 4 + 1));
+        let (_2, rem) = rem.split_at(min(rem.len(), 12 - 5 + 1));
+        let (__, rem) = rem.split_at(min(rem.len(), 14 - 13 + 1));
+        let (_3, rem) = rem.split_at(min(rem.len(), 22 - 15 + 1));
+        let (__, rem) = rem.split_at(min(rem.len(), 24 - 23 + 1));
+        let (_4, rem) = rem.split_at(min(rem.len(), 36 - 25 + 1));
+        let (__, rem) = rem.split_at(min(rem.len(), 39 - 37 + 1));
+        let (_5, rem) = rem.split_at(min(rem.len(), 47 - 40 + 1));
+        let (__, rem) = rem.split_at(min(rem.len(), 49 - 48 + 1));
+        let (_6, _) = rem.split_at(min(rem.len(), 61 - 50 + 1));
 
         use std::str::from_utf8;
-        (from_utf8(_1).unwrap().trim(),
-         from_utf8(_2).unwrap().trim(),
-         from_utf8(_3).unwrap().trim(),
-         from_utf8(_4).unwrap().trim(),
-         from_utf8(_5).unwrap().trim(),
-         from_utf8(_6).unwrap().trim())
+        (
+            from_utf8(_1).unwrap().trim(),
+            from_utf8(_2).unwrap().trim(),
+            from_utf8(_3).unwrap().trim(),
+            from_utf8(_4).unwrap().trim(),
+            from_utf8(_5).unwrap().trim(),
+            from_utf8(_6).unwrap().trim(),
+        )
     }
 }
 
@@ -251,27 +245,27 @@ pub fn read<'a, R: Read + 'a>(readable: R) -> Result<Problem, String> {
                     Err(e) => Err(e.to_string()),
                     Ok(s) => {
                         let Some(pre_comment) = s.split('*').next().map(|s| s.trim_end()) else {
-                            continue
+                            continue;
                         };
                         if pre_comment.is_empty() {
-                            continue
+                            continue;
                         }
                         if !pre_comment.is_ascii() {
-                            return Some(Err(format!("Line is not ascii:\"{}\"", s)))
+                            return Some(Err(format!("Line is not ascii:\"{}\"", s)));
                         }
                         Ok(pre_comment.to_owned())
                     }
-                })
-            }
+                }),
+            };
         }
     };
 
     MpsReader {
-        read_line: &mut read_line
-    }.into_problem()
+        read_line: &mut read_line,
+    }
+    .into_problem()
 }
 
-pub fn parse_fixed(file_content: &str) -> Result<Problem, String>
-{
+pub fn parse_fixed(file_content: &str) -> Result<Problem, String> {
     read(file_content.as_bytes())
 }
